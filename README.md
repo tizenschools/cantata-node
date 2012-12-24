@@ -1,4 +1,4 @@
-Evented I/O for V8 javascript. [![Build Status](https://secure.travis-ci.org/joyent/node.png)](http://travis-ci.org/joyent/node)
+Evented I/O for V8 javascript.
 ===
 
 This is a guide how to compile node.js (v0.8.16-release) for arm architecture and create the node executable to be able to be linked dynamically.
@@ -13,7 +13,8 @@ This is a guide how to compile node.js (v0.8.16-release) for arm architecture an
 
     $ ./build --dest-cpu=arm --with-pie
     $ file out/Release/node
-    out/Release/node: ELF 32-bit LSB shared object, Intel 80386, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.15, not stripped
+    out/Release/node: ELF 32-bit LSB shared object, Intel 80386, version 1 (SYSV), dynamically linked 
+    (uses shared libs), for GNU/Linux 2.6.15, not stripped
 
 ### Build own your own:
 
