@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+import optparse
+import os
+import pprint
+import subprocess
+import sys
+import commands
+
+# parse our options
+parser = optparse.OptionParser()
+
+parser.add_option("--dest-cpu",
+    action="store",
+    dest="dest_cpu",
+    help="CPU architecture to build for. Valid values are: arm, x86")
+
+parser.add_option("--with-pie",
+    action="store_true",
+    dest="with_pie",
+    help="Build with pie option. The executable is able to be linked dynamically")
+
+parser.add_option("--prefix",
+    action="store",
+    dest="prefix",
+    help="Select the install prefix (defaults to ./node/out/Release)")
+
+(options, args) = parser.parse_args()
+
+def execute(cmd):
+    popen = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    out, error = popen.communicate()
+    return out, error
+
+def is_ubuntu() :
+    cmd = "cat /etc/issue.net"
+    out, error = execute(cmd)
+    if error:
+        return 'false'
+    offset = out.lower().find('ubuntu')
+
+    if (offset > 0):
+        return 'true'
+    else:
+        return 'false'
+
+def arm_utils_check(dpkg):
+    cmd = "dpkg -l | grep {0} | wc -l ".format(dpkg)
+    out, error = execute(cmd)
+
+    if (out.strip() == '0'):
+        print >> sys.stderr, ''
+        print >> sys.stderr, 'Please make sure %s' % dpkg, 'package has been installed in your machine.'
+        print >> sys.stderr, 'To install: sudo apt-get install %s' % dpkg, ''
+        sys.exit()
+
+def b(value):
+    """Returns the string 'true' if value is truthy, 'false' otherwise."""
+    if value:
+        return 'true'
+    else:
+        return 'false'
+
+target_arch = options.dest_cpu
+
+if not is_ubuntu():
+    print >> sys.stderr, 'cantata node is only supposed to be built in ubuntu machine'
+    sys.exit()
+
+if target_arch == 'arm':
+    print >> sys.stderr, 'Setting some environments for cross compile ...'
+    arm_utils_check('binutils-arm-linux-gnueabi')
+    arm_utils_check('g++-arm-linux-gnueabi')
+
+    os.putenv('AR','arm-linux-gnueabi-ar')
+    os.putenv('CC', 'arm-linux-gnueabi-gcc')
+    os.putenv('CXX', 'arm-linux-gnueabi-g++')
+    os.putenv('LINK', 'arm-linux-gnueabi-g++')
+
+if not os.path.isdir("./node/.git"):
+    print 'Cloning node git repository from github.com/joyent ...'
+    popen = subprocess.Popen('git clone https://github.com/joyent/node.git', shell=True, stdout=subprocess.PIPE)
+    out, error = popen.communicate()
+    print out
+    if error:
+        print >> sys.stderr, 'Failed to clone into node.'
+        sys.exit()
+
+if not os.path.isdir("./node/.git"):
+    print >> sys.stderr, 'Failed to clone into node.'
+    sys.exit()
+
+os.chdir("./node")
+print 'Switching to branch v0.8.16-release ...'
+out, error = commands.getstatusoutput('git checkout v0.8.16-release')
+
+with_pie = options.with_pie
+
+if b(options.with_pie) == 'true':
+    print 'Patching for making pie executable'
+    out, error = commands.getstatusoutput('patch -p0 < ../patch-for-making-pie-executable.patch');
+
+print 'Configuring to make file ...'
+if target_arch == 'arm':
+    out, err = execute('./configure --without-snapshot --dest-cpu=arm --dest-os=linux')
+else:
+    out, err = execute('./configure --without-snapshot --dest-cpu=ia32 --dest-os=linux')
+print 'Building ...'
+popen = subprocess.Popen('make --jobs=8', shell=True, stdout=subprocess.PIPE)
+#out, error = commands.getstatusoutput('make --jobs=8')
+out, error = popen.communicate()
+print out,
+
+os.chdir("..")
+if not error:
+    install_path = options.prefix
+    if install_path:
+        cmd = "cp -rf ./node/out/Release/node {0}".format(install_path)
+        print 'Installing node to: ' + install_path
+        out, err = execute(cmd)
+
+print ''
+print 'Job finished'

@@ -1,0 +1,16 @@
+diff --git common.gypi common.gypi
+index b26d2f3..3c9a649 100644
+--- common.gypi
++++ common.gypi
+@@ -161,9 +161,9 @@
+         ],
+       }],
+       [ 'OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
+-        'cflags': [ '-Wall', '-pthread', ],
++        'cflags': [ '-Wall', '-pthread', '-fPIE', ],
+         'cflags_cc': [ '-fno-rtti', '-fno-exceptions' ],
+-        'ldflags': [ '-pthread', '-rdynamic' ],
++        'ldflags': [ '-pthread', '-rdynamic', '-pie', ],
+         'conditions': [
+           [ 'target_arch=="ia32"', {
+             'cflags': [ '-m32' ],
