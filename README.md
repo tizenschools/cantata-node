@@ -10,9 +10,10 @@ This is a guide how to compile node.js (v0.8.16-release) for arm architecture an
     * libexecinfo (FreeBSD and OpenBSD only)
 
 ### Build using build script (Ubuntu only):
-
-    $ ./build --dest-cpu=arm --with-pie
-    $ file out/Release/node
+   
+    $ mkdir output
+    $ ./build --dest-cpu=arm --with-pie --prefix=./output
+    $ file ./output/node
     out/Release/node: ELF 32-bit LSB shared object, Intel 80386, version 1 (SYSV), dynamically linked 
     (uses shared libs), for GNU/Linux 2.6.15, not stripped
 
